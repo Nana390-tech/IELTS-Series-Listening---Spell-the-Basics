@@ -1,0 +1,654 @@
+<title>Spell It Right</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+Arabic:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a home grid of section tiles, then one listening card at a time, styled like an IELTS answer sheet */
+:root{
+  --bg:#F3F5F9; --paper:#FFFFFF; --ink:#151F2E; --muted:#56637A; --line:#D2DAE6;
+  --pist:#1D5FAD; --pist-soft:#DCE7F6; --on-pist:#FFFFFF; --mag:#C62F2F; --mag-soft:#FADFDC;
+  --ok:#17803F; --ok-soft:#DDF1E2; --bad:#B42318; --bad-soft:#FBE1DE;
+  --f-display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  --f-ar:"Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141C; --paper:#18202B; --ink:#E4EAF3; --muted:#9CA9BC; --line:#2D3848;
+  --pist:#6FA8F2; --pist-soft:#172A44; --on-pist:#0A1322; --mag:#FF6B5E; --mag-soft:#3D1916;
+  --ok:#6FD98E; --ok-soft:#163222; --bad:#FF8A7E; --bad-soft:#3A1714; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141C; --paper:#18202B; --ink:#E4EAF3; --muted:#9CA9BC; --line:#2D3848;
+  --pist:#6FA8F2; --pist-soft:#172A44; --on-pist:#0A1322; --mag:#FF6B5E; --mag-soft:#3D1916;
+  --ok:#6FD98E; --ok-soft:#163222; --bad:#FF8A7E; --bad-soft:#3A1714; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.55}
+.wrap{max-width:900px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+[lang="ar"]{font-family:var(--f-ar);direction:rtl}
+button{font:inherit;cursor:pointer;border-radius:10px;border:2px solid transparent;padding:10px 18px;font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--mag);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn{background:var(--mag);color:#fff}
+.btn.alt{background:var(--pist);color:var(--on-pist)}
+.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.ghost:hover{border-color:var(--mag)}
+.small{font-size:15px;padding:6px 12px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:2px solid var(--line);margin-bottom:22px}
+.brand{display:flex;gap:12px;align-items:center}
+.wave{width:44px;height:44px;border-radius:50%;background:var(--mag);display:grid;place-items:center;flex:none}
+.brand h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:700;font-variant-numeric:tabular-nums}
+.chip b{color:var(--mag)}
+select{font:inherit;font-size:15px;padding:6px 8px;border-radius:8px;border:2px solid var(--line);background:var(--paper);color:var(--ink);max-width:220px}
+
+/* home */
+.intro{display:grid;gap:8px;margin-bottom:22px;max-width:66ch}
+.intro h2{font-size:34px;font-weight:800}
+.intro p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.tile{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:8px;text-align:left;color:var(--ink);font-weight:400}
+.tile:hover{border-color:var(--mag)}
+.tile .n{font-family:var(--f-mono);font-size:14px;color:var(--mag);letter-spacing:.08em}
+.tile h3{font-size:22px}
+.tile p{margin:0;font-size:16px;color:var(--muted)}
+.tile .ar{font-size:16px;color:var(--muted)}
+.bar{height:8px;border-radius:99px;background:var(--pist-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pist)}
+.tile.test{background:var(--mag-soft);border-color:var(--mag)}
+.tile.test .bar{background:var(--paper)}
+.tile.test .bar i{background:var(--mag)}
+.badge{display:inline-flex;gap:6px;align-items:center;font-size:14px;font-weight:700;color:var(--ok)}
+
+/* section */
+.sechead{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+.sechead h2{font-size:30px;font-weight:800}
+.sechead .ar{color:var(--muted);font-size:18px}
+details.tips{background:var(--pist-soft);border-radius:14px;padding:14px 18px;margin-bottom:18px}
+details.tips summary{font-family:var(--f-display);font-weight:700;font-size:20px;cursor:pointer}
+.tiplist{display:grid;gap:12px;margin-top:12px}
+.tip{display:grid;gap:2px}
+.tip p{margin:0}
+.tip p[lang="ar"]{color:var(--muted);font-size:17px}
+.alpha{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin:12px 0 4px}
+.alpha button{font-family:var(--f-mono);font-size:22px;padding:8px 0;background:var(--paper);border-color:var(--line);color:var(--ink)}
+.alpha button.tricky{border-color:var(--mag);color:var(--mag)}
+.hint{font-size:15px;color:var(--muted);margin:4px 0 0}
+
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dots span{width:14px;height:14px;border-radius:50%;background:var(--line)}
+.dots span.cur{background:var(--mag)}
+.dots span.y{background:var(--ok)}
+.dots span.n{background:var(--bad)}
+
+.qcard{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:22px;display:grid;gap:18px}
+.qmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:15px;color:var(--muted)}
+.ctx{background:var(--mag-soft);color:var(--mag);font-weight:700;border-radius:6px;padding:2px 10px}
+.players{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.play{background:var(--mag);color:#fff;font-size:20px;padding:12px 24px;display:inline-flex;gap:10px;align-items:center}
+.play.on{background:var(--pist);color:var(--on-pist)}
+.instr{font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.gapline{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:baseline;font-size:20px}
+.gapline label{font-weight:700}
+.ansbox{font-family:var(--f-mono);font-size:22px;padding:6px 10px;border:none;border-bottom:3px solid var(--ink);background:var(--pist-soft);color:var(--ink);border-radius:6px 6px 0 0;width:min(260px,100%);min-width:0}
+.ansbox.y{border-color:var(--ok);background:var(--ok-soft)}
+.ansbox.n{border-color:var(--bad);background:var(--bad-soft)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.fb{border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.fb.y{background:var(--ok-soft)}
+.fb.n{background:var(--bad-soft)}
+.fb.w{background:var(--mag-soft)}
+.fb p{margin:0}
+.diff{font-family:var(--f-mono);font-size:22px;letter-spacing:.06em;word-break:break-all}
+.diff .x{color:var(--bad);text-decoration:line-through}
+.diff .m{color:var(--ok);text-decoration:underline;text-decoration-thickness:3px}
+.diffrow{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.diffrow span.l{font-size:14px;color:var(--muted);width:90px}
+.script{font-size:17px;border-left:4px solid var(--pist);padding:4px 0 4px 12px;color:var(--ink)}
+.script .sp{font-weight:700;color:var(--mag)}
+.gloss{font-size:17px}
+
+/* forms & test sheet */
+.formsheet{background:var(--paper);border:2px solid var(--ink);border-radius:4px;padding:18px;display:grid;gap:12px}
+.formsheet h3{font-size:20px;border-bottom:2px solid var(--ink);padding-bottom:8px}
+.frow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;font-size:19px}
+.qn{font-family:var(--f-mono);font-weight:700;background:var(--ink);color:var(--bg);border-radius:6px;padding:0 8px;font-size:16px;min-width:2.4em;text-align:center}
+.mark{font-weight:700}
+.mark.y{color:var(--ok)}
+.mark.n{color:var(--bad)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{background:var(--paper);border-color:var(--line);color:var(--ink);font-size:16px}
+.tabs button.cur{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.testrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
+.testrow:last-child{border-bottom:none}
+.pbtn{background:var(--mag);color:#fff;font-size:15px;padding:6px 12px;white-space:nowrap}
+.confirm{background:var(--mag-soft);border-radius:12px;padding:14px;display:grid;gap:10px}
+
+/* results */
+.score{display:flex;flex-wrap:wrap;gap:22px;align-items:center;background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.big{font-family:var(--f-display);font-size:64px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:28px;color:var(--muted)}
+.parts{display:grid;gap:8px;flex:1;min-width:220px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 60px;gap:10px;align-items:center;font-size:16px}
+.prow .bar{grid-column:1 / -1}
+.cert{border:6px double var(--mag);background:var(--paper);border-radius:6px;padding:28px 22px;text-align:center;display:grid;gap:10px;margin:18px 0}
+.cert h3{font-size:30px;color:var(--mag)}
+.cert .who{font-family:var(--f-display);font-size:34px;font-weight:800;border-bottom:2px solid var(--line);padding-bottom:6px}
+.namein{font:inherit;padding:8px 12px;border-radius:8px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:min(320px,100%)}
+.review{display:grid;gap:6px;margin-top:10px}
+.rv{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:17px}
+.rv .you{font-family:var(--f-mono)}
+.rv .cor{font-family:var(--f-mono);color:var(--ok);font-weight:700}
+
+footer{margin-top:34px;padding-top:14px;border-top:2px solid var(--line);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;font-size:15px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-weight:700;z-index:30;max-width:calc(100% - 32px)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:20}
+@media (max-width:520px){.brand h1{font-size:24px}.intro h2{font-size:28px}.big{font-size:52px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="wave" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 26 26"><g fill="#fff"><rect x="2" y="10" width="3" height="6" rx="1.5"/><rect x="7.5" y="6" width="3" height="14" rx="1.5"/><rect x="13" y="2" width="3" height="22" rx="1.5"/><rect x="18.5" y="7" width="3" height="12" rx="1.5"/></g></svg></div>
+      <div><h1>Spell It Right</h1><small>IELTS Listening foundations</small></div>
+    </div>
+    <div class="chips">
+      <span class="chip">Points <b id="pts">0</b></span>
+      <span class="chip">Badges <b id="bdg">0</b></span>
+      <label class="chip" for="voiceSel" style="display:flex;gap:8px;align-items:center">Voice <select id="voiceSel"></select></label>
+    </div>
+  </header>
+  <main id="app"></main>
+  <footer>
+    <span>Designed by: Nazila Motahari</span>
+    <span style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="ghost small" id="saveBtn">Save progress</button>
+      <label class="ghost small" style="border:2px solid var(--line);border-radius:10px;padding:6px 12px;font-weight:700;cursor:pointer">Load progress<input type="file" id="loadIn" accept=".json,application/json" hidden></label>
+    </span>
+  </footer>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const SECTIONS = [
+{ id:"letters", n:"01", title:"Letters & Codes", ar:"الحروف والرموز", blurb:"Booking references, postcodes and flight numbers. Hear each letter clearly.", kind:"items", alphabet:true,
+  tips:[
+   ["P and B are different letters. P has a small puff of air.","لا يوجد حرف P في العربية. استمع جيداً: P معها هواء، و B بدون هواء."],
+   ["A sounds like 'ay', E sounds like 'ee', I sounds like 'eye'.","انتبه: A تُنطق «اي»، E تُنطق «ii»، I تُنطق «آي». هذه الأخطاء شائعة جداً."],
+   ["G sounds like 'jee'. J sounds like 'jay'.","G = «جي» و J = «جيه». لا تخلط بينهما."],
+   ["'Double' means two of the same letter. Double S = SS.","كلمة double تعني حرفين متشابهين متتاليين."],
+   ["Zero is often said as 'oh'.","الصفر يُنطق غالباً oh مثل حرف O."]],
+  items:[
+   {ctx:"Ticket",say:"The code on your ticket is {sp:BPD}.",label:"Ticket code:",ans:["BPD"],type:"code"},
+   {ctx:"Locker",say:"Your locker code is {sp:EIA}.",label:"Locker code:",ans:["EIA"],type:"code"},
+   {ctx:"Meeting room",say:"The meeting room code is {sp:GJK}.",label:"Room code:",ans:["GJK"],type:"code"},
+   {ctx:"Printer",say:"The printer is called {sp:VWF}.",label:"Printer name:",ans:["VWF"],type:"code"},
+   {ctx:"Form",say:"My initials are {sp:HY}.",label:"Initials:",ans:["HY"],type:"code"},
+   {ctx:"Parcel",say:"The tracking letters on the parcel are {sp:QUR}.",label:"Tracking letters:",ans:["QUR"],type:"code"},
+   {ctx:"Address",say:"The postcode is {sp:SE1 7PB}.",label:"Postcode:",ans:["SE17PB"],type:"code"},
+   {ctx:"Airport",say:"Your flight number is {sp:EK} {dg:205}.",label:"Flight number:",ans:["EK205"],type:"code"},
+   {ctx:"Hotel",say:"Your booking reference is {sp:XZ48N}.",label:"Booking reference:",ans:["XZ48N"],type:"code"},
+   {ctx:"Car park",say:"The car registration is {sp:AD} {dg:7731}.",label:"Car registration:",ans:["AD7731"],type:"code"},
+   {ctx:"Café",say:"The Wi-Fi password is {sp:MTR22G}.",label:"Wi-Fi password:",ans:["MTR22G"],type:"code"},
+   {ctx:"Campus",say:"The library is in Block {sp:H}.",label:"Library: Block",ans:["H"],type:"code"}
+  ]},
+{ id:"names", n:"02", title:"Spelling Names", ar:"تهجئة الأسماء", blurb:"Surnames, streets and towns. The speaker says the name, then spells it.", kind:"items",
+  tips:[
+   ["The speaker usually says the name first, then spells it. Write what you hear, letter by letter.","اكتب الحروف التي تسمعها، وليس الكلمة التي تتوقعها."],
+   ["Listen for corrections: 'sorry', 'no', 'actually'. The last answer is the right one.","الإجابة الصحيحة تأتي بعد التصحيح: sorry / no / actually."],
+   ["Listen for 'double' in names: Rebecca has double C.","انتبه لكلمة double داخل الأسماء."],
+   ["Many English names have silent letters (Thompson, Hughes). Trust the spelling, not the sound.","بعض الأسماء فيها حروف لا تُنطق، لذلك اعتمد على التهجئة."]],
+  items:[
+   {ctx:"Hotel booking",say:"My family name is Thompson. That's {sp:THOMPSON}.",label:"Family name:",ans:["Thompson"]},
+   {ctx:"Gym form",say:"My first name is Rebecca. {sp:REBECCA}.",label:"First name:",ans:["Rebecca"]},
+   {ctx:"Address",say:"I live on Hillside Road. That's {sp:HILLSIDE}.",label:"Street:",post:"Road",ans:["Hillside"]},
+   {ctx:"Office",say:"The contact is Mr Fairbanks. Oh, sorry, there's no S at the end. It's {sp:FAIRBANK}.",label:"Contact: Mr",ans:["Fairbank"]},
+   {ctx:"Travel",say:"The town is called Barnstead. {sp:BARNSTEAD}.",label:"Town:",ans:["Barnstead"]},
+   {ctx:"School",say:"The teacher is Mrs Jennings. {sp:JENNINGS}.",label:"Teacher: Mrs",ans:["Jennings"]},
+   {ctx:"Work",say:"The company is called Greenway. {sp:GREENWAY}.",label:"Company:",ans:["Greenway"]},
+   {ctx:"Registration",say:"My name's Kathryn, with a K and a Y. {sp:KATHRYN}.",label:"First name:",ans:["Kathryn"]},
+   {ctx:"Holiday",say:"We're staying at the Garrison Hotel. {sp:GARRISON}.",label:"Hotel: The",post:"Hotel",ans:["Garrison"]},
+   {ctx:"Sports",say:"The club is called Harbourside. {sp:HARBOURSIDE}.",label:"Club name:",ans:["Harbourside"]},
+   {ctx:"Clinic",say:"My surname is Wilkinson. {sp:WILKINSON}.",label:"Surname:",ans:["Wilkinson"]},
+   {ctx:"Delivery",say:"The office is on Queensbury Avenue. {sp:QUEENSBURY}.",label:"Address:",post:"Avenue",ans:["Queensbury"]}
+  ]},
+{ id:"numbers", n:"03", title:"Numbers, Times & Dates", ar:"الأرقام والأوقات والتواريخ", blurb:"Phone numbers, prices, times, dates and the 13 / 30 trap.", kind:"items",
+  tips:[
+   ["13 or 30? thirTEEN has the stress at the end. THIRty has the stress at the start.","13 = thir-TEEN (الضغط في آخر الكلمة). 30 = THIR-ty (الضغط في أولها)."],
+   ["Quarter past eight = 8.15. Quarter to eight = 7.45. Half past two = 2.30.","quarter past = وربع. quarter to = إلا ربع (الساعة السابقة). half past = ونصف."],
+   ["In phone numbers, 'oh' = 0, 'double 3' = 33.","في أرقام الهواتف: oh تعني صفر، و double تعني رقمين متشابهين."],
+   ["Always write numbers as digits: 250, not 'two hundred and fifty'.","اكتب الأرقام بالأرقام وليس بالكلمات."],
+   ["Listen for changes: '200... sorry, 250'. Write the final number.","اكتب الرقم الأخير بعد التصحيح."]],
+  items:[
+   {ctx:"Phone",say:"You can call me on {dg:0507 344 912}.",label:"Mobile:",ans:["0507344912"],type:"code"},
+   {ctx:"Shopping",say:"The ticket is fifteen dirhams.",label:"Price: AED",ans:["15"],type:"num"},
+   {ctx:"College",say:"There are fifty students in the hall.",label:"Number of students:",ans:["50"],type:"num"},
+   {ctx:"Transport",say:"The bus leaves at quarter to eight in the morning.",label:"Bus leaves at:",post:"a.m.",ans:["7.45","07.45"],type:"num"},
+   {ctx:"Course",say:"The course starts on the twenty-third of March.",label:"Start date:",post:"March",ans:["23"],type:"num"},
+   {ctx:"Interview",say:"She moved to Abu Dhabi in two thousand and nineteen.",label:"Year she moved:",ans:["2019"],type:"num"},
+   {ctx:"Address",say:"We live at number thirty-six, Palm Street.",label:"Address:",post:"Palm Street",ans:["36"],type:"num"},
+   {ctx:"Café",say:"The total is twelve dirhams fifty.",label:"Total: AED",ans:["12.50","12.5"],type:"num"},
+   {ctx:"Apartment",say:"The deposit is two hundred... sorry, two hundred and fifty dirhams.",label:"Deposit: AED",ans:["250"],type:"num"},
+   {ctx:"Hotel",say:"Your room is on the thirteenth floor.",label:"Floor:",ans:["13"],type:"num"},
+   {ctx:"Phone",say:"The office number is {dg:02 665 0071}.",label:"Office phone:",ans:["026650071"],type:"code"},
+   {ctx:"Work",say:"The meeting is at half past two in the afternoon.",label:"Meeting time:",post:"p.m.",ans:["2.30","02.30","14.30"],type:"num"},
+   {ctx:"Form",say:"Her birthday is on the first of December.",label:"Date of birth:",post:"December",ans:["1","01"],type:"num"},
+   {ctx:"Trip",say:"The beach is about seventeen kilometres away.",label:"Distance:",post:"km",ans:["17"],type:"num"}
+  ]},
+{ id:"vocab", n:"04", title:"Everyday Words", ar:"كلمات يومية", blurb:"Common IELTS words inside a sentence. Spell every letter correctly.", kind:"items",
+  tips:[
+   ["In IELTS, one spelling mistake makes the whole answer wrong.","في الآيلتس، أي خطأ إملائي واحد يجعل الإجابة خاطئة."],
+   ["Read the sentence before you listen. Is the gap a noun, a verb or an adjective?","اقرأ الجملة قبل الاستماع وتوقّع نوع الكلمة."],
+   ["Check plurals. 'volunteers' and 'volunteer' are different answers.","انتبه لحرف s في الجمع."],
+   ["Watch the silent letters: Wednesday, February, receipt.","بعض الكلمات فيها حروف لا تُنطق، مثل Wednesday."]],
+  items:[
+   {ctx:"College",say:"Students can borrow books from the library on the first floor.",pre:"Students can borrow books from the",post:"on the first floor.",ans:["library"],gl:"مكتبة"},
+   {ctx:"Office",say:"The meeting has been moved to Wednesday.",pre:"The meeting has been moved to",post:".",ans:["Wednesday"],gl:"الأربعاء"},
+   {ctx:"Application",say:"Please bring a recent photograph with your form.",pre:"Please bring a recent",post:"with your form.",ans:["photograph"],gl:"صورة فوتوغرافية"},
+   {ctx:"Hotel",say:"The hotel offers free accommodation for children under five.",pre:"The hotel offers free",post:"for children under five.",ans:["accommodation"],gl:"إقامة / سكن"},
+   {ctx:"Hotel",say:"Lunch is served in the restaurant next to reception.",pre:"Lunch is served in the",post:"next to reception.",ans:["restaurant"],gl:"مطعم"},
+   {ctx:"Tour",say:"You will need comfortable shoes for the walk.",pre:"You will need",post:"shoes for the walk.",ans:["comfortable"],gl:"مريح"},
+   {ctx:"Course",say:"The course finishes in February.",pre:"The course finishes in",post:".",ans:["February"],gl:"فبراير"},
+   {ctx:"Clinic",say:"Please arrive ten minutes early for your appointment.",pre:"Please arrive ten minutes early for your",post:".",ans:["appointment"],gl:"موعد"},
+   {ctx:"Museum",say:"The museum has a new exhibition about the environment.",pre:"The museum has a new exhibition about the",post:".",ans:["environment"],gl:"البيئة"},
+   {ctx:"Event",say:"We need volunteers to help at the event.",pre:"We need",post:"to help at the event.",ans:["volunteers"],gl:"متطوعون"},
+   {ctx:"Apartment",say:"The rent includes electricity but not the internet.",pre:"The rent includes",post:"but not the internet.",ans:["electricity"],gl:"كهرباء"},
+   {ctx:"Campus",say:"Parking is available behind the building.",pre:"Parking is available behind the",post:".",ans:["building"],gl:"مبنى"},
+   {ctx:"Tour",say:"The tour includes a visit to the science laboratory.",pre:"The tour includes a visit to the science",post:".",ans:["laboratory"],gl:"مختبر"},
+   {ctx:"Booking",say:"It is necessary to book in advance.",pre:"It is",post:"to book in advance.",ans:["necessary"],gl:"ضروري"}
+  ]},
+{ id:"forms", n:"05", title:"Real Situations", ar:"مواقف واقعية", blurb:"Full phone calls, like IELTS Part 1. Complete a form with five gaps.", kind:"forms",
+  tips:[
+   ["Read the form first. For each gap ask: a name, a number, a date or a word?","اقرأ النموذج أولاً، وحدد نوع كل إجابة: اسم؟ رقم؟ تاريخ؟ كلمة؟"],
+   ["The answers come in the same order as the questions.","الإجابات تأتي بنفس ترتيب الأسئلة."],
+   ["People change their minds. Wait for the final answer.","الناس يغيّرون رأيهم أثناء الحديث. انتظر الإجابة النهائية."],
+   ["Write ONE WORD AND/OR A NUMBER for each answer.","اكتب كلمة واحدة و/أو رقماً لكل إجابة."]],
+  convs:[
+   {title:"Joining a gym",lines:[
+     [0,"Good morning, Desert Fit Gym. How can I help you?"],
+     [1,"Hi. I'd like to become a member."],
+     [0,"Great. Can I have your full name, please?"],
+     [1,"Yes, it's Sara Mitchell."],
+     [0,"How do you spell your surname?"],
+     [1,"{sp:MITCHELL}."],
+     [0,"Thank you. And your phone number?"],
+     [1,"It's {dg:0558 213 640}."],
+     [0,"Would you like the monthly or the yearly membership?"],
+     [1,"I was going to choose monthly, but the yearly one is better value. So yearly, please."],
+     [0,"Good choice. The yearly membership is one thousand two hundred dirhams."],
+     [1,"And when can I start?"],
+     [0,"You can start on Sunday the fourteenth of November."]],
+    fields:[
+     {label:"Surname:",ans:["Mitchell"]},
+     {label:"Phone:",ans:["0558213640"],type:"code"},
+     {label:"Membership type:",ans:["yearly"]},
+     {label:"Cost: AED",ans:["1200"],type:"num"},
+     {label:"Start date: Sunday",post:"November",ans:["14"],type:"num"}]},
+   {title:"Lost property at the mall",lines:[
+     [0,"Mall information desk. Can I help you?"],
+     [1,"Yes, I've lost my wallet."],
+     [0,"I'm sorry to hear that. What colour is it?"],
+     [1,"It's black. Oh no, sorry, it's brown. The black one is my phone case."],
+     [0,"Brown. Where do you think you lost it?"],
+     [1,"Near the fountain, on the ground floor."],
+     [0,"And what time was that?"],
+     [1,"About quarter past four."],
+     [0,"Can I have your surname, please?"],
+     [1,"Rashidi. {sp:RASHIDI}."],
+     [0,"Thank you. Your reference number is {sp:LP} {dg:3078}. Please keep it."]],
+    fields:[
+     {label:"Colour of wallet:",ans:["brown"]},
+     {label:"Lost near the",ans:["fountain"]},
+     {label:"Time: about",post:"p.m.",ans:["4.15","04.15","16.15"],type:"num"},
+     {label:"Surname:",ans:["Rashidi"]},
+     {label:"Reference number:",ans:["LP3078"],type:"code"}]}
+  ]}
+];
+
+const TEST = {
+ p1:[
+  {say:"Your student ID starts with the letters {sp:HCT}.",label:"Student ID letters:",ans:["HCT"],type:"code"},
+  {say:"The booking code is {sp:VBP}.",label:"Booking code:",ans:["VBP"],type:"code"},
+  {say:"The postcode is {sp:NW3 8GJ}.",label:"Postcode:",ans:["NW38GJ"],type:"code"},
+  {say:"Your flight is {sp:EY} {dg:417}.",label:"Flight:",ans:["EY417"],type:"code"},
+  {say:"My surname is Peterson. {sp:PETERSON}.",label:"Surname:",ans:["Peterson"]},
+  {say:"The street is called Mallory Lane. {sp:MALLORY}.",label:"Street:",post:"Lane",ans:["Mallory"]},
+  {say:"Her first name is Joanne. {sp:JOANNE}.",label:"First name:",ans:["Joanne"]},
+  {say:"The hotel manager is Mr Whitfield. {sp:WHITFIELD}.",label:"Manager: Mr",ans:["Whitfield"]},
+  {say:"The village is called Ashworth. {sp:ASHWORTH}.",label:"Village:",ans:["Ashworth"]},
+  {say:"Is it Philips with one L? No, with two Ls. {sp:PHILLIPS}.",label:"Name:",ans:["Phillips"]}],
+ p2:[
+  {say:"My number is {dg:0566 702 238}.",label:"Mobile:",ans:["0566702238"],type:"code"},
+  {say:"The fee is forty dirhams.",label:"Fee: AED",ans:["40"],type:"num"},
+  {say:"Lessons begin at quarter past nine.",label:"Lessons begin at:",post:"a.m.",ans:["9.15","09.15"],type:"num"},
+  {say:"The festival is on the thirtieth of January.",label:"Date:",post:"January",ans:["30"],type:"num"},
+  {say:"The bridge was built in nineteen seventy-eight.",label:"Year built:",ans:["1978"],type:"num"},
+  {say:"The apartment is on the fourteenth floor.",label:"Floor:",ans:["14"],type:"num"},
+  {say:"That comes to eighty-five dirhams seventy-five.",label:"Total: AED",ans:["85.75"],type:"num"},
+  {say:"The trip takes about ninety minutes.",label:"Length of trip:",post:"minutes",ans:["90"],type:"num"},
+  {say:"It was sixty dirhams, but now it's on sale for forty-five.",label:"Sale price: AED",ans:["45"],type:"num"},
+  {say:"Our office number is {dg:04 339 1185}.",label:"Office phone:",ans:["043391185"],type:"code"}],
+ p3:[
+  {say:"Keep your receipt in case you need to return the item.",pre:"Keep your",post:"in case you need to return the item.",ans:["receipt"]},
+  {say:"The swimming pool is closed until tomorrow.",pre:"The swimming pool is closed until",post:".",ans:["tomorrow"]},
+  {say:"This course is suitable for complete beginners.",pre:"This course is suitable for complete",post:".",ans:["beginners"]},
+  {say:"All equipment is provided by the club.",pre:"All",post:"is provided by the club.",ans:["equipment"]},
+  {say:"The temperature will drop at night.",pre:"The",post:"will drop at night.",ans:["temperature"]},
+  {say:"Please check the timetable on the website.",pre:"Please check the",post:"on the website.",ans:["timetable"]},
+  {say:"Visitors must sign in at the entrance.",pre:"Visitors must sign in at the",post:".",ans:["entrance"]},
+  {say:"Breakfast is included in the price.",pre:"Breakfast is",post:"in the price.",ans:["included"]},
+  {say:"The library is very quiet in the mornings.",pre:"The library is very",post:"in the mornings.",ans:["quiet"]},
+  {say:"We recommend that you bring sunscreen and a hat.",pre:"We",post:"that you bring sunscreen and a hat.",ans:["recommend"]}],
+ p4:[
+  {title:"Signing up for an English course",lines:[
+    [0,"Good afternoon, City Language Centre. How can I help you?"],
+    [1,"Hello. I'd like to sign up for an English course."],
+    [0,"Of course. What's your surname, please?"],
+    [1,"It's Hughes. {sp:HUGHES}."],
+    [0,"Thank you. And what level are you?"],
+    [1,"I thought I was a beginner, but I did the online test and it says intermediate."],
+    [0,"OK, so intermediate. Our intermediate classes are on Tuesday and Thursday."],
+    [1,"That's fine. What time do they start?"],
+    [0,"They start at six forty-five in the evening and finish at eight forty-five."],
+    [1,"And how much is the course?"],
+    [0,"It's two thousand four hundred dirhams for ten weeks."]],
+   fields:[
+    {label:"Surname:",ans:["Hughes"]},
+    {label:"Level:",ans:["intermediate"]},
+    {label:"Classes on:",post:"and Thursday",ans:["Tuesday"]},
+    {label:"Classes start at:",post:"p.m.",ans:["6.45","06.45","18.45"],type:"num"},
+    {label:"Course fee: AED",ans:["2400"],type:"num"}]},
+  {title:"Booking a desert safari",lines:[
+    [0,"Sunrise Desert Tours, good morning."],
+    [1,"Hi, I'd like to book the evening desert safari."],
+    [0,"Sure. How many adults?"],
+    [1,"It was going to be four, but my brother is coming too, so five adults."],
+    [0,"Five adults. Which day?"],
+    [1,"Friday the twenty-second of November."],
+    [0,"OK. We pick you up from your hotel. Where should the driver wait?"],
+    [1,"At the hotel reception, please."],
+    [0,"And the name for the booking?"],
+    [1,"Gallagher. {sp:GALLAGHER}."],
+    [0,"Thank you, Mr Gallagher. Oh, and bring a jacket. It gets cold in the desert at night."]],
+   fields:[
+    {label:"Number of adults:",ans:["5"],type:"num"},
+    {label:"Date: Friday",post:"November",ans:["22"],type:"num"},
+    {label:"Pick-up: hotel",ans:["reception"]},
+    {label:"Booking name:",ans:["Gallagher"]},
+    {label:"Bring a",ans:["jacket"]}]}
+ ]
+};
+const PART_NAMES=["Part 1 · Letters, codes & names","Part 2 · Numbers, times & dates","Part 3 · Everyday words","Part 4 · Real situations"];
+
+/* ================= STATE ================= */
+let state={name:"",points:0,sec:{},badges:[],test:null};
+function updateChips(){document.getElementById("pts").textContent=state.points;document.getElementById("bdg").textContent=state.badges.length}
+function addBadge(b){if(!state.badges.includes(b)){state.badges.push(b);toast("Badge earned: "+b);confetti()}updateChips()}
+
+/* ================= HELPERS ================= */
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function norm(s,type){
+  s=(s||"").trim().toLowerCase().replace(/\s+/g," ");
+  if(type==="code")return s.replace(/[\s\-]/g,"");
+  if(type==="num"){s=s.replace(/[\s,]/g,"").replace(/:/g,".").replace(/^aed/,"").replace(/(dirhams?|aed|km|minutes)$/,"").replace(/(p\.?m\.?|a\.?m\.?)$/,"").replace(/(st|nd|rd|th)$/,"").replace(/\.$/,"");return s}
+  return s.replace(/[.,!]$/,"");
+}
+const isRight=(given,q)=>given.trim()!==""&&q.ans.some(a=>norm(a,q.type)===norm(given,q.type));
+function transcript(t){return esc(t).replace(/\{sp:([^}]*)\}/g,(m,a)=>a.split(" ").map(w=>w.split("").join("-")).join(" ")).replace(/\{dg:([^}]*)\}/g,"$1")}
+function diffHTML(given,correct){
+  const A=given.trim(),B=correct,a=A.toLowerCase(),b=B.toLowerCase(),n=a.length,m=b.length;
+  const dp=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=a[i]===b[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const ka=new Array(n).fill(false),kb=new Array(m).fill(false);let i=0,j=0;
+  while(i<n&&j<m){if(a[i]===b[j]){ka[i]=kb[j]=true;i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++}
+  const g=A.split("").map((c,k)=>ka[k]?esc(c):`<span class="x">${esc(c)}</span>`).join("")||"<em>(blank)</em>";
+  const c=B.split("").map((ch,k)=>kb[k]?esc(ch):`<span class="m">${esc(ch)}</span>`).join("");
+  return `<div class="diffrow"><span class="l">You wrote</span><span class="diff">${g}</span></div><div class="diffrow"><span class="l">Correct</span><span class="diff">${c}</span></div>`;
+}
+let toastT;function toast(msg){let t=document.querySelector(".toast");if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.appendChild(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
+
+/* ================= SPEECH ================= */
+const synth=window.speechSynthesis||null;
+let voices=[],v0=null,v1=null,playTok=0;
+const LET={A:"ay",B:"bee",C:"see",D:"dee",E:"ee",F:"eff",G:"jee",H:"aitch",I:"eye",J:"jay",K:"kay",L:"el",M:"em",N:"en",O:"oh",P:"pee",Q:"cue",R:"are",S:"ess",T:"tee",U:"you",V:"vee",W:"double you",X:"ex",Y:"why",Z:"zed"};
+const DIG={"0":"oh","1":"one","2":"two","3":"three","4":"four","5":"five","6":"six","7":"seven","8":"eight","9":"nine"};
+function runs(str,dict){const ch=str.toUpperCase().split(""),out=[];for(let i=0;i<ch.length;i++){const c=ch[i];if(c===" "){out.push("|");continue}let n=1;while(ch[i+n]===c)n++;const w=dict[c]||LET[c]||DIG[c]||c;if(n===2){out.push("double "+w);i++}else if(n>=3){out.push("triple "+w);i+=2}else out.push(w)}return out}
+function vScore(v){let s=0;if(/en[-_]GB/i.test(v.lang))s+=4;else if(/en[-_](AU|IE|NZ)/i.test(v.lang))s+=2;else if(/en[-_]US/i.test(v.lang))s+=1;if(/natural|neural|google|online/i.test(v.name))s+=2;return s}
+function loadVoices(){
+  if(!synth)return;voices=synth.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>vScore(b)-vScore(a));
+  const sel=document.getElementById("voiceSel");const prev=sel.value;
+  sel.innerHTML=voices.length?voices.map((v,i)=>`<option value="${i}">${esc(v.name.replace(/Microsoft |Google /,""))} (${esc(v.lang)})</option>`).join(""):"<option>Default</option>";
+  if(prev&&voices[prev])sel.value=prev;pickVoices();
+}
+function pickVoices(){const i=+document.getElementById("voiceSel").value||0;v0=voices[i]||null;v1=voices.find(v=>v!==v0&&v.lang===(v0&&v0.lang))||voices.find(v=>v!==v0)||v0}
+if(synth){loadVoices();synth.onvoiceschanged=loadVoices}
+document.getElementById("voiceSel").addEventListener("change",pickVoices);
+const UP={};"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(c=>UP[c]=c);
+/* Normal speed: each line is ONE utterance, so the voice keeps its natural rhythm.
+   Letters are spoken as a comma list ("T, H, O, M..."), digit groups as "oh five five eight, two one three". */
+function naturalLine(text){
+  return text.replace(/\{sp:([^}]*)\}/g,(m,a)=>a.split(/\s+/).map(g=>runs(g,UP).join(", ")).join(". "))
+             .replace(/\{dg:([^}]*)\}/g,(m,a)=>a.split(/\s+/).map(g=>runs(g,DIG).join(" ")).join(", "));
+}
+function buildQueue(lines,slow){
+  if(!slow)return lines.map(([spk,text])=>({t:naturalLine(text),v:spk,p:300}));
+  const q=[];
+  lines.forEach(([spk,text])=>{
+    const re=/\{(sp|dg):([^}]*)\}/g;let last=0,m;
+    const plain=t=>{t=t.trim();if(/[a-z0-9]/i.test(t))q.push({t,v:spk,p:200})};
+    while((m=re.exec(text))){plain(text.slice(last,m.index));
+      if(m[1]==="sp"){runs(m[2],LET).forEach(tok=>{if(tok==="|"){if(q.length)q[q.length-1].p=380}else q.push({t:tok,v:spk,p:90,r:1.1})});}
+      else{m[2].split(/\s+/).forEach(g=>q.push({t:runs(g,DIG).join(" "),v:spk,p:260,r:1.05}))}
+      if(q.length)q[q.length-1].p=350;last=re.lastIndex}
+    plain(text.slice(last));if(q.length)q[q.length-1].p+=350;
+  });return q;
+}
+function stopAudio(){playTok++;if(synth)synth.cancel();document.querySelectorAll(".play.on").forEach(b=>b.classList.remove("on"))}
+function play(lines,slow,btn,onDone){
+  if(!synth){toast("This browser cannot play speech. Try Chrome or Edge.");return}
+  stopAudio();const tok=playTok,queue=buildQueue(lines,slow);let i=0;if(btn)btn.classList.add("on");
+  const step=()=>{if(tok!==playTok)return;if(i>=queue.length){if(btn)btn.classList.remove("on");onDone&&onDone();return}
+    const it=queue[i++],u=new SpeechSynthesisUtterance(it.t);const voice=it.v===1?v1:v0;if(voice){u.voice=voice;u.lang=voice.lang}else u.lang="en-GB";
+    u.rate=slow?.7:1;u.pitch=(it.v===1&&v1===v0)?.8:1;let done=false;const next=()=>{if(done)return;done=true;setTimeout(step,(it.p||0)*(slow?2.5:1))};u.onend=next;u.onerror=next;synth.speak(u)};
+  step();
+}
+const one=t=>[[0,t]];
+
+/* ================= HOME ================= */
+function renderHome(){
+  stopAudio();
+  const tiles=SECTIONS.map(s=>{const r=state.sec[s.id],tot=s.kind==="forms"?s.convs.reduce((a,c)=>a+c.fields.length,0):s.items.length,best=r?r.best:0,pct=Math.round(best/tot*100);
+    return `<button class="tile" data-go="${s.id}"><span class="n">SECTION ${s.n}</span><h3>${esc(s.title)}</h3><span class="ar" lang="ar">${s.ar}</span><p>${esc(s.blurb)}</p>
+    <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div><p style="font-size:15px">${r?`Best: ${best} / ${tot}`:`${tot} questions`} ${state.badges.includes(s.title)?'<span class="badge">★ Badge</span>':""}</p></button>`}).join("");
+  const tb=state.test;
+  app.innerHTML=`<section class="intro"><h2>Hear it. Spell it. Get the mark.</h2><p>In IELTS Listening, a correct answer with one wrong letter scores zero. Practise the five basic skills, then take the 40-question final test.</p></section>
+  <div class="grid">${tiles}<button class="tile test" data-go="test"><span class="n">FINAL TEST</span><h3>40-Question Test</h3><span class="ar" lang="ar">الاختبار النهائي</span><p>Four parts, like the real exam. Each recording plays twice. Score 32 or more for a certificate.</p>
+  <div class="bar" aria-hidden="true"><i style="width:${tb?Math.round(tb.best/40*100):0}%"></i></div><p style="font-size:15px">${tb?`Best: ${tb.best} / 40`:"Not taken yet"}</p></button></div>`;
+  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>b.dataset.go==="test"?startTest():openSection(b.dataset.go));
+}
+
+/* ================= SECTION ================= */
+function header(s){
+  return `<div class="sechead"><button class="ghost small" id="back">← All sections</button><h2>${esc(s.title)}</h2><span class="ar" lang="ar">${s.ar}</span></div>
+  <details class="tips" open><summary>Listening tips</summary><div class="tiplist">${s.tips.map(t=>`<div class="tip"><p>${esc(t[0])}</p><p lang="ar">${t[1]}</p></div>`).join("")}</div>
+  ${s.alphabet?`<p style="margin:14px 0 0;font-weight:700">Warm-up: tap a letter to hear it. Pink letters are often confused.</p><div class="alpha">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(c=>`<button data-l="${c}" class="${"ABEGIJPV".includes(c)?"tricky":""}" aria-label="Hear letter ${c}">${c}</button>`).join("")}</div>`:""}</details>`;
+}
+let cur=null;
+function openSection(id){
+  const s=SECTIONS.find(x=>x.id===id);stopAudio();
+  if(s.kind==="forms")return renderForms(s);
+  cur={s,order:shuffle(s.items.map((_,i)=>i)),i:0,tries:0,res:[],score:0};
+  app.innerHTML=header(s)+`<div class="dots" id="dots"></div><div id="card"></div>`;
+  bindHeader(s);renderCard();
+}
+function bindHeader(s){document.getElementById("back").onclick=renderHome;app.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>play(one(`{sp:${b.dataset.l}}`),false))}
+function renderDots(){document.getElementById("dots").innerHTML=cur.order.map((_,k)=>`<span class="${k===cur.i?"cur":cur.res[k]===true?"y":cur.res[k]===false?"n":""}"></span>`).join("")}
+function gapHTML(q,id,cls=""){
+  if(q.pre!==undefined)return `<span>${esc(q.pre)}</span><input class="ansbox ${cls}" id="${id}" aria-label="Your answer" autocomplete="off" autocapitalize="off" spellcheck="false"><span>${esc(q.post||"")}</span>`;
+  return `<label for="${id}">${esc(q.label)}</label><input class="ansbox ${cls}" id="${id}" autocomplete="off" autocapitalize="off" spellcheck="false">${q.post?`<span>${esc(q.post)}</span>`:""}`;
+}
+function renderCard(){
+  renderDots();const q=cur.s.items[cur.order[cur.i]];cur.tries=0;
+  document.getElementById("card").innerHTML=`<div class="qcard">
+   <div class="qmeta"><span class="ctx">${esc(q.ctx)}</span><span>Question ${cur.i+1} of ${cur.order.length}</span></div>
+   <div class="players"><button class="play" id="pl">▶ Listen</button><button class="ghost" id="slow">Slow</button></div>
+   <p class="instr" style="margin:0">Write ONE WORD AND/OR A NUMBER</p>
+   <div class="gapline">${gapHTML(q,"ans")}</div>
+   <div class="actions"><button class="btn" id="chk">Check</button></div>
+   <div id="fb"></div></div>`;
+  const lines=one(q.say),inp=document.getElementById("ans");
+  document.getElementById("pl").onclick=e=>play(lines,false,e.currentTarget);
+  document.getElementById("slow").onclick=e=>play(lines,true,document.getElementById("pl"));
+  document.getElementById("chk").onclick=check;inp.onkeydown=e=>{if(e.key==="Enter")check()};
+}
+function check(){
+  const q=cur.s.items[cur.order[cur.i]],inp=document.getElementById("ans"),fb=document.getElementById("fb"),val=inp.value;
+  if(!val.trim()){toast("Type your answer first.");return}
+  const ok=isRight(val,q);
+  const gloss=q.gl?`<p class="gloss"><b>${esc(q.ans[0])}</b> = <span lang="ar">${q.gl}</span></p>`:"";
+  const script=`<p class="script">“${transcript(q.say)}”</p>`;
+  if(ok){const pts=cur.tries===0?10:5;state.points+=pts;cur.score++;cur.res[cur.i]=true;inp.className="ansbox y";inp.readOnly=true;
+    fb.className="fb y";fb.innerHTML=`<p><b>Correct! +${pts} points</b></p>${gloss}${script}`;finishQ();}
+  else if(cur.tries===0){cur.tries=1;inp.className="ansbox n";fb.className="fb w";fb.innerHTML=`<p><b>Not quite.</b> Listen again (try Slow) and check every letter.</p>`;inp.focus();}
+  else{cur.res[cur.i]=false;inp.className="ansbox n";inp.readOnly=true;fb.className="fb n";fb.innerHTML=`<p><b>The answer is ${esc(q.ans[0])}</b></p>${diffHTML(val,q.ans[0])}${gloss}${script}`;finishQ();}
+  updateChips();renderDots();
+}
+function finishQ(){
+  const a=document.querySelector(".actions"),last=cur.i===cur.order.length-1;
+  a.innerHTML=`<button class="btn alt" id="nx">${last?"See my score":"Next question →"}</button>`;
+  const nx=document.getElementById("nx");nx.focus();nx.onclick=()=>{stopAudio();if(last)sectionDone();else{cur.i++;renderCard()}};
+}
+function sectionDone(){
+  const s=cur.s,tot=s.items.length,sc=cur.score,r=state.sec[s.id]||{best:0};r.best=Math.max(r.best,sc);state.sec[s.id]=r;
+  const pass=sc>=Math.ceil(tot*.8);if(pass)addBadge(s.title);
+  const missed=cur.order.map((ix,k)=>cur.res[k]===false?s.items[ix]:null).filter(Boolean);
+  document.getElementById("card").innerHTML=`<div class="qcard"><div class="score" style="margin:0;border:none;padding:0"><div class="big">${sc}<small> / ${tot}</small></div>
+   <div style="display:grid;gap:6px;flex:1;min-width:200px"><h3 style="font-size:24px">${pass?"Excellent. Badge unlocked!":"Good effort. Practise again to reach "+Math.ceil(tot*.8)+"."}</h3>
+   <p style="margin:0;color:var(--muted)">${pass?"You are ready for the next section.":"Look at the answers you missed below, then try again."}</p></div></div>
+   ${missed.length?`<div><p style="margin:0 0 6px;font-weight:700">Words to review</p><div class="review">${missed.map(q=>`<div class="rv"><span class="cor">${esc(q.ans[0])}</span><span>${transcript(q.say)}</span></div>`).join("")}</div></div>`:""}
+   <div class="actions"><button class="btn" id="again">Try again</button><button class="ghost" id="home">All sections</button></div></div>`;
+  document.getElementById("again").onclick=()=>openSection(s.id);document.getElementById("home").onclick=renderHome;
+}
+
+/* ================= FORMS (Real situations) ================= */
+function renderForms(s){
+  const done={};
+  app.innerHTML=header(s)+s.convs.map((c,ci)=>`<div class="qcard" style="margin-bottom:16px" id="cv${ci}">
+   <div class="qmeta"><span class="ctx">Conversation ${ci+1}</span><span>5 questions</span></div>
+   <h3 style="font-size:24px">${esc(c.title)}</h3>
+   <p style="margin:0">First, read the form for 30 seconds and predict each answer. Then listen.</p>
+   <div class="players"><button class="play" data-p="${ci}">▶ Listen</button><button class="ghost" data-s="${ci}">Slow</button></div>
+   <div class="formsheet"><h3>${esc(c.title)}</h3>${c.fields.map((f,fi)=>`<div class="frow"><span class="qn">${fi+1}</span>${gapHTML(f,`f${ci}_${fi}`)}<span class="mark" id="m${ci}_${fi}"></span></div>`).join("")}</div>
+   <div class="actions"><button class="btn" data-c="${ci}">Check answers</button></div><div data-fb="${ci}"></div></div>`).join("");
+  bindHeader(s);
+  app.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>play(s.convs[b.dataset.p].lines,false,b));
+  app.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>play(s.convs[b.dataset.s].lines,true,app.querySelector(`[data-p="${b.dataset.s}"]`)));
+  app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{
+    const ci=+b.dataset.c,c=s.convs[ci];let sc=0;
+    c.fields.forEach((f,fi)=>{const inp=document.getElementById(`f${ci}_${fi}`),ok=isRight(inp.value,f);if(ok)sc++;inp.className="ansbox "+(ok?"y":"n");inp.readOnly=true;
+      const m=document.getElementById(`m${ci}_${fi}`);m.className="mark "+(ok?"y":"n");m.textContent=ok?"✓":"✗ "+f.ans[0]});
+    if(!done[ci]){state.points+=sc*10;done[ci]=sc}
+    b.parentNode.innerHTML=`<button class="ghost" data-r="${ci}">Try this conversation again</button>`;
+    app.querySelector(`[data-r="${ci}"]`).onclick=()=>renderForms(s);
+    app.querySelector(`[data-fb="${ci}"]`).innerHTML=`<div class="fb ${sc>=4?"y":"w"}"><p><b>${sc} / 5 correct.</b> Read the script and find where each answer was said.</p>${c.lines.map(l=>`<p class="script"><span class="sp">${l[0]?"Caller":"Staff"}:</span> ${transcript(l[1])}</p>`).join("")}</div>`;
+    if(Object.keys(done).length===s.convs.length){const tot=Object.values(done).reduce((a,b)=>a+b,0),r=state.sec[s.id]||{best:0};r.best=Math.max(r.best,tot);state.sec[s.id]=r;if(tot>=8)addBadge(s.title)}
+    updateChips();
+  });
+}
+
+/* ================= FINAL TEST ================= */
+let T=null;
+function startTest(){
+  stopAudio();
+  const parts=[shuffle(TEST.p1),shuffle(TEST.p2),shuffle(TEST.p3)].map((items,pi)=>({name:PART_NAMES[pi],items}));
+  parts.push({name:PART_NAMES[3],convs:TEST.p4});
+  let n=1;const qs=[];
+  parts.forEach((p,pi)=>{if(p.items)p.items.forEach(q=>{q.no=n++;q.part=pi;qs.push(q)});else p.convs.forEach(c=>c.fields.forEach(f=>{f.no=n++;f.part=pi;qs.push(f)}))});
+  T={parts,qs,ans:{},plays:{},p:0,confirm:false};
+  app.innerHTML=`<div class="sechead"><button class="ghost small" id="back">← Leave test</button><h2>Final Test</h2><span class="ar" lang="ar">الاختبار النهائي</span></div>
+  <details class="tips"><summary>Test rules</summary><div class="tiplist">
+   <div class="tip"><p>40 questions in four parts. You can move between parts.</p><p lang="ar">٤٠ سؤالاً في أربعة أجزاء، ويمكنك التنقل بينها.</p></div>
+   <div class="tip"><p>Each recording plays a maximum of two times. There is no slow mode.</p><p lang="ar">كل تسجيل يُشغَّل مرتين فقط، ولا يوجد وضع بطيء.</p></div>
+   <div class="tip"><p>Write ONE WORD AND/OR A NUMBER. Spelling must be correct.</p><p lang="ar">اكتب كلمة واحدة و/أو رقماً، ويجب أن تكون التهجئة صحيحة.</p></div></div></details>
+  <div class="tabs" id="tabs"></div><div id="sheet"></div>`;
+  document.getElementById("back").onclick=renderHome;renderPart();
+}
+function playBtn(key,label){const left=2-(T.plays[key]||0);return `<button class="pbtn" data-k="${key}" ${left<=0?"disabled":""}>▶ ${label} (${left} left)</button>`}
+function renderPart(){
+  stopAudio();const p=T.parts[T.p];
+  document.getElementById("tabs").innerHTML=T.parts.map((pp,i)=>`<button class="${i===T.p?"cur":""}" data-t="${i}">Part ${i+1}</button>`).join("");
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{T.p=+b.dataset.t;T.confirm=false;renderPart()});
+  let body="";
+  if(p.items){body=`<div class="formsheet"><h3>${esc(p.name)} · Questions ${p.items[0].no}–${p.items[p.items.length-1].no}</h3><p class="instr" style="margin:0">Write ONE WORD AND/OR A NUMBER for each answer</p>
+    ${p.items.map(q=>`<div class="testrow"><span class="qn">${q.no}</span>${playBtn("q"+q.no,"Play")}<div class="gapline" style="font-size:18px">${gapHTML(q,"t"+q.no)}</div></div>`).join("")}</div>`}
+  else{body=p.convs.map((c,ci)=>`<div class="formsheet" style="margin-bottom:16px"><h3>${esc(p.name)} · Questions ${c.fields[0].no}–${c.fields[c.fields.length-1].no}</h3>
+    <div class="players">${playBtn("c"+ci,"Play conversation")}</div><p style="margin:0;font-weight:700">${esc(c.title)}</p>
+    ${c.fields.map(f=>`<div class="frow"><span class="qn">${f.no}</span>${gapHTML(f,"t"+f.no)}</div>`).join("")}</div>`).join("")}
+  const last=T.p===T.parts.length-1,answered=Object.values(T.ans).filter(v=>v.trim()).length;
+  body+=`<div class="actions" style="margin-top:16px">${T.p>0?'<button class="ghost" id="prev">← Previous part</button>':""}${!last?'<button class="btn" id="next">Next part →</button>':'<button class="btn" id="sub">Submit test</button>'}</div>
+   ${T.confirm?`<div class="confirm" style="margin-top:12px"><p style="margin:0"><b>Submit now?</b> You have answered ${answered} of 40 questions. You cannot change answers after this.</p><div class="actions"><button class="btn" id="yes">Yes, submit</button><button class="ghost" id="no">Keep working</button></div></div>`:""}`;
+  document.getElementById("sheet").innerHTML=body;
+  T.qs.filter(q=>q.part===T.p).forEach(q=>{const i=document.getElementById("t"+q.no);i.value=T.ans[q.no]||"";i.oninput=()=>T.ans[q.no]=i.value});
+  document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=b.dataset.k;if((T.plays[k]||0)>=2)return;T.plays[k]=(T.plays[k]||0)+1;
+    const lines=k[0]==="c"?p.convs[+k.slice(1)].lines:one(T.qs.find(q=>q.no===+k.slice(1)).say);
+    const left=2-T.plays[k];b.textContent=`▶ ${k[0]==="c"?"Play conversation":"Play"} (${left} left)`;b.disabled=true;
+    play(lines,false,null,()=>{b.disabled=left<=0})});
+  const g=id=>document.getElementById(id);
+  if(g("prev"))g("prev").onclick=()=>{T.p--;renderPart()};
+  if(g("next"))g("next").onclick=()=>{T.p++;renderPart();window.scrollTo(0,0)};
+  if(g("sub"))g("sub").onclick=()=>{T.confirm=true;renderPart()};
+  if(g("yes"))g("yes").onclick=submitTest;
+  if(g("no"))g("no").onclick=()=>{T.confirm=false;renderPart()};
+}
+function submitTest(){
+  stopAudio();
+  const res=T.qs.map(q=>({q,given:T.ans[q.no]||"",ok:isRight(T.ans[q.no]||"",q)}));
+  const score=res.filter(r=>r.ok).length,pp=[0,1,2,3].map(pi=>res.filter(r=>r.q.part===pi&&r.ok).length);
+  state.points+=score*5;const prev=state.test?state.test.best:0;state.test={best:Math.max(prev,score),last:score,date:new Date().toISOString().slice(0,10)};
+  const pass=score>=32;if(pass)addBadge("Final Test Certificate");updateChips();
+  const level=score>=36?"Ready for full IELTS Listening practice tests.":score>=32?"Strong foundations. Move on to full Part 1 and Part 2 practice.":score>=24?"Nearly there. Repeat the sections where you lost marks.":"Keep practising. Go back to the five sections and aim for a badge in each.";
+  app.innerHTML=`<div class="sechead"><button class="ghost small" id="back">← All sections</button><h2>Your results</h2></div>
+  <div class="score"><div class="big">${score}<small> / 40</small></div><div class="parts">${PART_NAMES.map((n,i)=>`<div class="prow"><span>${esc(n)}</span><b style="text-align:right;font-variant-numeric:tabular-nums">${pp[i]}/10</b><div class="bar"><i style="width:${pp[i]*10}%"></i></div></div>`).join("")}</div></div>
+  <p style="font-size:20px;font-weight:700;margin:0 0 6px">${level}</p>
+  ${pass?`<div style="display:grid;gap:8px;margin-top:14px"><label for="cname" style="font-weight:700">Your name for the certificate</label><input id="cname" class="namein" value="${esc(state.name)}" placeholder="Type your full name"></div>
+   <div class="cert" id="cert"><p class="instr" style="margin:0">Certificate of achievement</p><h3>Spell It Right · Listening Foundations</h3><p style="margin:0">This certifies that</p><div class="who" id="cwho">${esc(state.name||"Your name")}</div>
+   <p style="margin:0">scored <b>${score} / 40</b> on the Final Test in spelling names, letters, numbers and everyday words.</p><p style="margin:0;color:var(--muted)">${state.test.date} · Designed by: Nazila Motahari</p></div>`:
+   `<p style="color:var(--muted)">Score 32 or more to unlock your certificate.</p>`}
+  <h3 style="font-size:22px;margin-top:20px">Check your answers</h3>
+  <div class="review">${res.map(r=>`<div class="rv"><span class="qn">${r.q.no}</span><span class="mark ${r.ok?"y":"n"}">${r.ok?"✓":"✗"}</span><span class="you">${esc(r.given||"(blank)")}</span>${r.ok?"":`<span class="cor">→ ${esc(r.q.ans[0])}</span>`}</div>`).join("")}</div>
+  <h3 style="font-size:22px;margin-top:20px">Scripts</h3>
+  <details class="tips" style="background:var(--paper);border:2px solid var(--line)"><summary>Show all scripts</summary><div class="tiplist">
+   ${T.parts.slice(0,3).map(p=>p.items.map(q=>`<p class="script"><b>${q.no}.</b> ${transcript(q.say)}</p>`).join("")).join("")}
+   ${T.parts[3].convs.map(c=>`<p style="margin:8px 0 0;font-weight:700">${esc(c.title)}</p>`+c.lines.map(l=>`<p class="script"><span class="sp">${l[0]?"Caller":"Staff"}:</span> ${transcript(l[1])}</p>`).join("")).join("")}</div></details>
+  <div class="actions" style="margin-top:16px"><button class="btn" id="retake">Take the test again</button><button class="ghost" id="home">All sections</button></div>`;
+  document.getElementById("back").onclick=renderHome;document.getElementById("home").onclick=renderHome;document.getElementById("retake").onclick=startTest;
+  const cn=document.getElementById("cname");if(cn)cn.oninput=()=>{state.name=cn.value;document.getElementById("cwho").textContent=cn.value||"Your name"};
+  window.scrollTo(0,0);if(pass)confetti();
+}
+
+/* ================= SAVE / LOAD ================= */
+document.getElementById("saveBtn").onclick=()=>{
+  try{const blob=new Blob([JSON.stringify({app:"spell-it-right",v:1,state},null,2)],{type:"application/json"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=`spell-it-right-${(state.name||"progress").replace(/\s+/g,"-")}.json`;document.body.appendChild(a);a.click();a.remove();toast("Progress file saved.")}catch(e){toast("Saving is not available here.")}
+};
+document.getElementById("loadIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=="spell-it-right")throw 0;state=Object.assign({name:"",points:0,sec:{},badges:[],test:null},d.state);updateChips();renderHome();toast("Progress loaded.")}catch(err){toast("That file is not a Spell It Right progress file.")}};r.readAsText(f);e.target.value=""};
+
+/* ================= CONFETTI ================= */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=document.getElementById("confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+  const cs=getComputedStyle(document.documentElement),cols=["--mag","--pist","--ok"].map(v=>cs.getPropertyValue(v).trim()).concat(["#F5C542"]);
+  const P=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.4,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,s:5+Math.random()*6,r:Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)]}));
+  let f=0;(function tick(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++f<180)requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height)})();
+}
+
+updateChips();renderHome();
+</script>
