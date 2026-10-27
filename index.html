@@ -44,6 +44,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chip{background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:700;font-variant-numeric:tabular-nums}
 .chip b{color:var(--mag)}
+.classbtn{font-size:inherit;cursor:pointer;color:var(--ink)}
+.classbtn[aria-pressed="true"]{background:var(--mag);border-color:var(--mag);color:var(--on-mag, #fff)}
+.classbtn[aria-pressed="true"] b{color:inherit}
+.classnote{background:var(--mag-soft);border-radius:12px;padding:12px 16px;margin:0 0 18px;font-weight:700}
 select{font:inherit;font-size:15px;padding:6px 8px;border-radius:8px;border:2px solid var(--line);background:var(--paper);color:var(--ink);max-width:220px}
 
 /* home */
@@ -161,6 +165,7 @@ footer{margin-top:34px;padding-top:14px;border-top:2px solid var(--line);display
     <div class="chips">
       <span class="chip">Points <b id="pts">0</b></span>
       <span class="chip">Badges <b id="bdg">0</b></span>
+      <button class="chip classbtn" id="classBtn" aria-pressed="false">Class mode: <b>Off</b></button>
       <label class="chip" for="voiceSel" style="display:flex;gap:8px;align-items:center">Voice <select id="voiceSel"></select></label>
     </div>
   </header>
@@ -387,7 +392,11 @@ const TEST = {
 const PART_NAMES=["Part 1 · Letters, codes & names","Part 2 · Numbers, times & dates","Part 3 · Everyday words","Part 4 · Real situations"];
 
 /* ================= STATE ================= */
-let state={name:"",points:0,sec:{},badges:[],test:null};
+let state={name:"",points:0,sec:{},badges:[],test:null,classMode:false};
+try{if(location.hash==="#class")state.classMode=true}catch(e){}
+const ord=a=>state.classMode?a.slice():shuffle(a);
+function syncClassBtn(){const b=document.getElementById("classBtn");b.setAttribute("aria-pressed",String(state.classMode));b.innerHTML="Class mode: <b>"+(state.classMode?"On":"Off")+"</b>"}
+document.getElementById("classBtn").onclick=()=>{state.classMode=!state.classMode;syncClassBtn();toast(state.classMode?"Class mode on. Everyone sees the same question order.":"Class mode off. Questions are shuffled.");renderHome()};
 function updateChips(){document.getElementById("pts").textContent=state.points;document.getElementById("bdg").textContent=state.badges.length}
 function addBadge(b){if(!state.badges.includes(b)){state.badges.push(b);toast("Badge earned: "+b);confetti()}updateChips()}
 
@@ -469,7 +478,7 @@ function renderHome(){
     return `<button class="tile" data-go="${s.id}"><span class="n">SECTION ${s.n}</span><h3>${esc(s.title)}</h3><span class="ar" lang="ar">${s.ar}</span><p>${esc(s.blurb)}</p>
     <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div><p style="font-size:15px">${r?`Best: ${best} / ${tot}`:`${tot} questions`} ${state.badges.includes(s.title)?'<span class="badge">★ Badge</span>':""}</p></button>`}).join("");
   const tb=state.test;
-  app.innerHTML=`<section class="intro"><h2>Hear it. Spell it. Get the mark.</h2><p>In IELTS Listening, a correct answer with one wrong letter scores zero. Practise the five basic skills, then take the 40-question final test.</p></section>
+  app.innerHTML=`${state.classMode?'<p class="classnote">Class mode is on. Every student sees the questions in the same order.</p>':""}<section class="intro"><h2>Hear it. Spell it. Get the mark.</h2><p>In IELTS Listening, a correct answer with one wrong letter scores zero. Practise the five basic skills, then take the 40-question final test.</p></section>
   <div class="grid">${tiles}<button class="tile test" data-go="test"><span class="n">FINAL TEST</span><h3>40-Question Test</h3><span class="ar" lang="ar">الاختبار النهائي</span><p>Four parts, like the real exam. Each recording plays twice. Score 32 or more for a certificate.</p>
   <div class="bar" aria-hidden="true"><i style="width:${tb?Math.round(tb.best/40*100):0}%"></i></div><p style="font-size:15px">${tb?`Best: ${tb.best} / 40`:"Not taken yet"}</p></button></div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>b.dataset.go==="test"?startTest():openSection(b.dataset.go));
@@ -485,7 +494,7 @@ let cur=null;
 function openSection(id){
   const s=SECTIONS.find(x=>x.id===id);stopAudio();
   if(s.kind==="forms")return renderForms(s);
-  cur={s,order:shuffle(s.items.map((_,i)=>i)),i:0,tries:0,res:[],score:0};
+  cur={s,order:ord(s.items.map((_,i)=>i)),i:0,tries:0,res:[],score:0};
   app.innerHTML=header(s)+`<div class="dots" id="dots"></div><div id="card"></div>`;
   bindHeader(s);renderCard();
 }
@@ -568,7 +577,7 @@ function renderForms(s){
 let T=null;
 function startTest(){
   stopAudio();
-  const parts=[shuffle(TEST.p1),shuffle(TEST.p2),shuffle(TEST.p3)].map((items,pi)=>({name:PART_NAMES[pi],items}));
+  const parts=[ord(TEST.p1),ord(TEST.p2),ord(TEST.p3)].map((items,pi)=>({name:PART_NAMES[pi],items}));
   parts.push({name:PART_NAMES[3],convs:TEST.p4});
   let n=1;const qs=[];
   parts.forEach((p,pi)=>{if(p.items)p.items.forEach(q=>{q.no=n++;q.part=pi;qs.push(q)});else p.convs.forEach(c=>c.fields.forEach(f=>{f.no=n++;f.part=pi;qs.push(f)}))});
@@ -639,7 +648,7 @@ document.getElementById("saveBtn").onclick=()=>{
   try{const blob=new Blob([JSON.stringify({app:"spell-it-right",v:1,state},null,2)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download=`spell-it-right-${(state.name||"progress").replace(/\s+/g,"-")}.json`;document.body.appendChild(a);a.click();a.remove();toast("Progress file saved.")}catch(e){toast("Saving is not available here.")}
 };
-document.getElementById("loadIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=="spell-it-right")throw 0;state=Object.assign({name:"",points:0,sec:{},badges:[],test:null},d.state);updateChips();renderHome();toast("Progress loaded.")}catch(err){toast("That file is not a Spell It Right progress file.")}};r.readAsText(f);e.target.value=""};
+document.getElementById("loadIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.app!=="spell-it-right")throw 0;const cm=state.classMode;state=Object.assign({name:"",points:0,sec:{},badges:[],test:null},d.state);state.classMode=cm;updateChips();renderHome();toast("Progress loaded.")}catch(err){toast("That file is not a Spell It Right progress file.")}};r.readAsText(f);e.target.value=""};
 
 /* ================= CONFETTI ================= */
 function confetti(){
@@ -650,5 +659,5 @@ function confetti(){
   let f=0;(function tick(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++f<180)requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height)})();
 }
 
-updateChips();renderHome();
+updateChips();syncClassBtn();renderHome();
 </script>
